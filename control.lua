@@ -80,10 +80,6 @@ local function player_waypoints_hotkey(event)
         -- print_gps(player, start)
         -- print_gps(player, goal)
 
-        for k, v in pairs(char.prototype.collision_mask.layers) do
-            print(k, v)
-        end
-
         pid = surface.request_path({
             bounding_box = char.prototype.collision_box,
             collision_mask = char.prototype.collision_mask,
@@ -128,6 +124,7 @@ end
 
 local function on_lua_shortcut(event)
     walk = false
+    game.players[event.player_index].character.walking_state = { walking = false, direction = defines.direction.north }
     game.players[event.player_index].create_local_flying_text({
         text = "Move the cursor to the goal position and use the shortcut key.",
         create_at_cursor = true,
@@ -148,11 +145,12 @@ local function on_tick(event)
 
                 if path_index > path_len then
                     walk = false
-                    print("walk = false at distance " .. distance(curr_pos, path[path_len].position))
+                    player.character.walking_state = { walking = false, direction = defines.direction.north }
+                    -- print("walk = false at distance " .. distance(curr_pos, path[path_len].position))
                 else
                     local dir = get_direction(curr_pos, path[path_index].position)
                     if dir then
-                        player.walking_state = { walking = true, direction = dir }
+                        player.character.walking_state = { walking = true, direction = dir }
                     end
                 end
             end
