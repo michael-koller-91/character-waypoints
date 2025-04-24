@@ -1,0 +1,20 @@
+local input = {
+    type = "custom-input",
+    name = "player-waypoints-hotkey",
+    key_sequence = "ALT + W"
+}
+
+local shortcut = {
+    type = "shortcut",
+    name = "player-waypoints-shortcut",
+    action = "lua",
+    associated_control_input = "player-waypoints-hotkey",
+    order = "m[player-waypoints-shortcut]",
+    style = "default",
+    icon = "__base__/graphics/icons/shortcut-toolbar/mip/new-rts-tool-x56.png",
+    icon_size = 56,
+    small_icon = "__base__/graphics/icons/shortcut-toolbar/mip/new-rts-tool-x24.png",
+    small_icon_size = 24
+}
+
+data:extend { input, shortcut }
