@@ -12,31 +12,32 @@ local function round(v)
     return math.floor(v + 0.5)
 end
 
+-- for debugging
 local function print_gps(player, pos)
     player.print("[gps=" .. round(pos.x) .. "," .. round(pos.y) .. ",nauvis]")
 end
 
-local function get_direction(s, t)
-    -- * The available directions are:
-    -- defines.direction.north          -- 0
-    -- defines.direction.northnortheast -- 1
-    -- defines.direction.northeast
-    -- defines.direction.eastnortheast
-    -- defines.direction.east           -- 4
-    -- defines.direction.eastsoutheast
-    -- defines.direction.southeast
-    -- defines.direction.southsoutheast
-    -- defines.direction.south          -- 8
-    -- defines.direction.southsouthwest
-    -- defines.direction.southwest
-    -- defines.direction.westsouthwest
-    -- defines.direction.west           -- 12
-    -- defines.direction.westnorthwest
-    -- defines.direction.northwest
-    -- defines.direction.northnorthwest -- 15
-
-    local delta_x = t.x - s.x
-    local delta_y = t.y - s.y
+-- Get the direction pointing from point `s` (start) to point `g` (goal).
+-- The available directions are:
+-- * defines.direction.north          -- 0
+-- * defines.direction.northnortheast -- 1
+-- * defines.direction.northeast
+-- * defines.direction.eastnortheast
+-- * defines.direction.east           -- 4
+-- * defines.direction.eastsoutheast
+-- * defines.direction.southeast
+-- * defines.direction.southsoutheast
+-- * defines.direction.south          -- 8
+-- * defines.direction.southsouthwest
+-- * defines.direction.southwest
+-- * defines.direction.westsouthwest
+-- * defines.direction.west           -- 12
+-- * defines.direction.westnorthwest
+-- * defines.direction.northwest
+-- * defines.direction.northnorthwest -- 15
+local function get_direction(s, g)
+    local delta_x = g.x - s.x
+    local delta_y = g.y - s.y
     -- * We have:
     -- (delta_y, delta_x) = (1, 0)  <=> south
     -- (delta_y, delta_x) = (-1, 0) <=> north
@@ -61,21 +62,40 @@ local function get_direction(s, t)
     return math.fmod(round(16 + angle16 - 4), 16)
 end
 
-local function distance(s, t)
-    local delta_x = math.abs(t.x - s.x)
-    local delta_y = math.abs(t.y - s.y)
+local function distance(s, g)
+    local delta_x = math.abs(g.x - s.x)
+    local delta_y = math.abs(g.y - s.y)
     return math.max(delta_x, delta_y)
 end
 
 local function player_waypoints_hotkey(event)
     if walk then
         walk = false
+        game.players[event.player_index].character.walking_state = {
+            walking = false,
+            direction = defines.direction.north
+        }
+        game.players[event.player_index].create_local_flying_text({
+            text = "Stop walking.",
+            position = game.players[event.player_index].character.position,
+            time_to_live = 80
+        })
     else
         player = game.players[event.player_index]
         local surface = player.surface
         local char = player.character
         start = player.character.position
         goal = event.cursor_position
+
+        -- rendering.draw_sprite {
+        --     sprite = "utility.shoot_cursor_red",
+        --     time_to_live = 60,
+        --     target = goal,
+        --     x_scale = 0.5,
+        --     y_scale = 0.5,
+        --     surface = player.surface,
+        --     players = { LuaPlayer = player }
+        -- }
 
         -- print_gps(player, start)
         -- print_gps(player, goal)
@@ -97,23 +117,35 @@ local function on_script_path_request_finished(event)
         if event.path then
             path = event.path
             path_len = #path
-            if player then
-                player.create_local_flying_text({
-                    text = tostring(path_len),
-                    create_at_cursor = true,
-                    time_to_live = 80
-                })
-            end
             if path_len > 1 then
                 walk = true
                 path_index = 2
+
+                if player then
+                    for i, p in ipairs(path) do
+                        if i == path_len then
+                            break
+                        end
+                        rendering.draw_line {
+                            color = { r = 1.0, g = 0.2627, b = 0.0, a = 0.5 },
+                            width = 5,
+                            from = p.position,
+                            to = path[i + 1].position,
+                            target = goal,
+                            surface = player.surface,
+                            time_to_live = 60,
+                            players = { LuaPlayer = player },
+                            draw_on_ground = true
+                        }
+                    end
+                end
             else
                 walk = false
             end
         else
             if player then
                 player.create_local_flying_text({
-                    text = "Did not find a path. Try again.",
+                    text = "Did not find a path.",
                     create_at_cursor = true,
                     time_to_live = 80
                 })
@@ -123,15 +155,17 @@ local function on_script_path_request_finished(event)
 end
 
 local function on_lua_shortcut(event)
-    walk = false
-    game.players[event.player_index].character.walking_state = { walking = false, direction = defines.direction.north }
-    game.players[event.player_index].create_local_flying_text({
-        text = "Move the cursor to the goal position and use the shortcut key.",
-        create_at_cursor = true,
-        time_to_live = 160
-    })
+    if event.prototype_name == "player-waypoints-shortcut" then
+        walk = false
+        game.players[event.player_index].character.walking_state = { walking = false, direction = defines.direction
+        .north }
+        game.players[event.player_index].create_local_flying_text({
+            text = "Move the cursor to the goal position and use the shortcut key.",
+            create_at_cursor = true,
+            time_to_live = 160
+        })
+    end
 end
-
 
 local function on_tick(event)
     if walk then
