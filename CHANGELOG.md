@@ -1,3 +1,6 @@
+# v0.0.4
+* The shortcut name as well as the flying texts are now localized names.
+
 # v0.0.3
 * The shortcut has a custom icon.
 
