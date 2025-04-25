@@ -76,7 +76,7 @@ local function player_waypoints_hotkey(event)
             direction = defines.direction.north
         }
         game.players[event.player_index].create_local_flying_text({
-            text = "Stop walking.",
+            text = {"player-waypoints-stop"},
             position = game.players[event.player_index].character.position,
             time_to_live = 80
         })
@@ -162,7 +162,7 @@ local function on_lua_shortcut(event)
             direction = defines.direction.north
         }
         game.players[event.player_index].create_local_flying_text({
-            text = "Move the cursor to the goal position and use the shortcut key.",
+            text = {"player-waypoints-instructions"},
             create_at_cursor = true,
             time_to_live = 160
         })
