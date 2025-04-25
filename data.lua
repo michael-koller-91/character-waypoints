@@ -11,9 +11,9 @@ local shortcut = {
     associated_control_input = "player-waypoints-hotkey",
     order = "m[player-waypoints-shortcut]",
     style = "default",
-    icon = "__base__/graphics/icons/shortcut-toolbar/mip/new-rts-tool-x56.png",
+    icon = "__player-waypoints__/icon-shortcut-x56.png",
     icon_size = 56,
-    small_icon = "__base__/graphics/icons/shortcut-toolbar/mip/new-rts-tool-x24.png",
+    small_icon = "__player-waypoints__/icon-shortcut-x24.png",
     small_icon_size = 24
 }
 

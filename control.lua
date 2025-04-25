@@ -59,7 +59,7 @@ local function get_direction(s, g)
     -- 8 * (math.atan(0, -1) / pi + 1) = 16 (supposed to be 12)
 
     -- * So, we need a rotation to arrive at the target numbers:
-    return math.fmod(round(16 + angle16 - 4), 16)
+    return math.fmod(round(12 + angle16), 16)
 end
 
 local function distance(s, g)
@@ -157,8 +157,10 @@ end
 local function on_lua_shortcut(event)
     if event.prototype_name == "player-waypoints-shortcut" then
         walk = false
-        game.players[event.player_index].character.walking_state = { walking = false, direction = defines.direction
-        .north }
+        game.players[event.player_index].character.walking_state = {
+            walking = false,
+            direction = defines.direction.north
+        }
         game.players[event.player_index].create_local_flying_text({
             text = "Move the cursor to the goal position and use the shortcut key.",
             create_at_cursor = true,
