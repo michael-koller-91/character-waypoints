@@ -11,9 +11,9 @@ local shortcut = {
     associated_control_input = "character-waypoints-hotkey",
     order = "m[character-waypoints-shortcut]",
     style = "default",
-    icon = "__character-waypoints__/icon-shortcut-x56.png",
+    icon = "__character-waypoints__/graphics/icon-shortcut-x56.png",
     icon_size = 56,
-    small_icon = "__character-waypoints__/icon-shortcut-x24.png",
+    small_icon = "__character-waypoints__/graphics/icon-shortcut-x24.png",
     small_icon_size = 24
 }
 
