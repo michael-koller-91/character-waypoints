@@ -1,11 +1,11 @@
 # potential TODOs
 
 * in data.lua, what is the shortcut order?
-* use script.on_event("player-waypoints-move-up", player_move_input) with a custom input
+* use script.on_event("character-waypoints-move-up", player_move_input) with a custom input
   ```lua
   {
     type = "custom-input",
-    name = "player-waypoints-move-up",
+    name = "character-waypoints-move-up",
   	key_sequence = "",
   	linked_game_control = "move-up"
   },

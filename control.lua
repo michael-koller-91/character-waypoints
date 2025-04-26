@@ -76,7 +76,7 @@ local function player_waypoints_hotkey(event)
             direction = defines.direction.north
         }
         game.players[event.player_index].create_local_flying_text({
-            text = {"player-waypoints-stop"},
+            text = { "character-waypoints-stop" },
             position = game.players[event.player_index].character.position,
             time_to_live = 80
         })
@@ -155,14 +155,14 @@ local function on_script_path_request_finished(event)
 end
 
 local function on_lua_shortcut(event)
-    if event.prototype_name == "player-waypoints-shortcut" then
+    if event.prototype_name == "character-waypoints-shortcut" then
         walk = false
         game.players[event.player_index].character.walking_state = {
             walking = false,
             direction = defines.direction.north
         }
         game.players[event.player_index].create_local_flying_text({
-            text = {"player-waypoints-instructions"},
+            text = { "character-waypoints-instructions" },
             create_at_cursor = true,
             time_to_live = 160
         })
@@ -194,7 +194,7 @@ local function on_tick(event)
     end
 end
 
-script.on_event("player-waypoints-hotkey", player_waypoints_hotkey)
+script.on_event("character-waypoints-hotkey", player_waypoints_hotkey)
 script.on_event(defines.events.on_lua_shortcut, on_lua_shortcut)
 script.on_event(defines.events.on_script_path_request_finished, on_script_path_request_finished)
 script.on_event(defines.events.on_tick, on_tick)
