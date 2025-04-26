@@ -1,3 +1,7 @@
+# v0.1.0
+* The mod is multiplayer ready.
+* The message for a failed path request is now a localized name as well.
+
 # v0.0.4
 * The shortcut name as well as the flying texts are now localized names.
 
