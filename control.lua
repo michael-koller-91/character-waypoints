@@ -1,12 +1,28 @@
-local player = nil
 local distance_margin = 0.5
-local start = nil
-local goal = nil
-local path = nil
-local path_len = nil
-local path_index = nil
-local pid = nil
-local walk = false
+local storage = {
+    pid = {},
+    pid_to_goal = {},
+    pid_to_path = {},
+    pid_to_path_index = {},
+    pid_to_path_len = {},
+    pid_to_player_index = {},
+    pid_to_walk = {},
+    player_to_pid = {},
+}
+
+local function remove_from_storage(pid)
+    if pid then
+        local player_index = storage.pid_to_player_index[pid]
+        storage.pid[pid] = nil
+        storage.pid_to_goal[pid] = nil
+        storage.pid_to_path[pid] = nil
+        storage.pid_to_path_index[pid] = nil
+        storage.pid_to_path_len[pid] = nil
+        storage.pid_to_player_index[pid] = nil
+        storage.pid_to_walk[pid] = nil
+        storage.player_to_pid[player_index] = nil
+    end
+end
 
 local function round(v)
     return math.floor(v + 0.5)
@@ -69,69 +85,66 @@ local function distance(s, g)
 end
 
 local function player_waypoints_hotkey(event)
-    if walk then
-        walk = false
-        game.players[event.player_index].character.walking_state = {
+    local pid = storage.player_to_pid[event.player_index]
+    local player = game.players[event.player_index]
+
+    if pid then -- the player recently requested a path and is currently walking
+        remove_from_storage(pid)
+
+        player.character.walking_state = {
             walking = false,
             direction = defines.direction.north
         }
-        game.players[event.player_index].create_local_flying_text({
+        player.create_local_flying_text({
             text = { "character-waypoints-stop" },
-            position = game.players[event.player_index].character.position,
+            position = player.character.position,
             time_to_live = 80
         })
-    else
-        player = game.players[event.player_index]
-        local surface = player.surface
-        local char = player.character
-        start = player.character.position
-        goal = event.cursor_position
+    else -- request a path for the player
+        local goal = event.cursor_position
 
-        -- rendering.draw_sprite {
-        --     sprite = "utility.shoot_cursor_red",
-        --     time_to_live = 60,
-        --     target = goal,
-        --     x_scale = 0.5,
-        --     y_scale = 0.5,
-        --     surface = player.surface,
-        --     players = { LuaPlayer = player }
-        -- }
-
-        -- print_gps(player, start)
+        -- print_gps(player, player.character.position)
         -- print_gps(player, goal)
 
-        pid = surface.request_path({
-            bounding_box = char.prototype.collision_box,
-            collision_mask = char.prototype.collision_mask,
-            start = start,
+        local pid = player.surface.request_path({
+            bounding_box = player.character.prototype.collision_box,
+            collision_mask = player.character.prototype.collision_mask,
+            start = player.character.position,
             goal = goal,
             force = player.force,
             can_open_gates = true,
-            entity_to_ignore = char
+            entity_to_ignore = player.character
         })
+
+        storage.pid[pid] = true
+        storage.pid_to_goal[pid] = goal
+        storage.pid_to_player_index[pid] = event.player_index
+        storage.player_to_pid[event.player_index] = pid
     end
 end
 
 local function on_script_path_request_finished(event)
-    if event.id == pid then
-        if event.path then
-            path = event.path
-            path_len = #path
-            if path_len > 1 then
-                walk = true
-                path_index = 2
+    if storage.pid[event.id] then
+        local player = game.players[storage.pid_to_player_index[event.id]]
 
+        if event.path then
+            local path = event.path
+            local path_len = #path
+
+            if path_len > 1 then -- otherwise there is no reason to walk
+                -- draw the path
                 if player then
                     for i, p in ipairs(path) do
                         if i == path_len then
                             break
                         end
+
                         rendering.draw_line {
                             color = { r = 1.0, g = 0.2627, b = 0.0, a = 0.5 },
                             width = 5,
                             from = p.position,
                             to = path[i + 1].position,
-                            target = goal,
+                            target = storage.pid_to_goal[event.id],
                             surface = player.surface,
                             time_to_live = 60,
                             players = { LuaPlayer = player },
@@ -139,16 +152,21 @@ local function on_script_path_request_finished(event)
                         }
                     end
                 end
-            else
-                walk = false
+
+                storage.pid_to_path[event.id] = path
+                storage.pid_to_path_index[event.id] = 2
+                storage.pid_to_path_len[event.id] = path_len
+                storage.pid_to_walk[event.id] = true
             end
-        else
+        else -- failed to find a path
             if player then
                 player.create_local_flying_text({
-                    text = "Did not find a path.",
+                    text = { "character-waypoints-path-request-failed" },
                     create_at_cursor = true,
                     time_to_live = 80
                 })
+
+                remove_from_storage(event.id)
             end
         end
     end
@@ -156,12 +174,19 @@ end
 
 local function on_lua_shortcut(event)
     if event.prototype_name == "character-waypoints-shortcut" then
-        walk = false
-        game.players[event.player_index].character.walking_state = {
-            walking = false,
-            direction = defines.direction.north
-        }
-        game.players[event.player_index].create_local_flying_text({
+        local player = game.players[event.player_index]
+        local pid = storage.player_to_pid[event.player_index]
+
+        if pid then
+            remove_from_storage(pid)
+
+            player.character.walking_state = {
+                walking = false,
+                direction = defines.direction.north
+            }
+        end
+
+        player.create_local_flying_text({
             text = { "character-waypoints-instructions" },
             create_at_cursor = true,
             time_to_live = 160
@@ -170,23 +195,31 @@ local function on_lua_shortcut(event)
 end
 
 local function on_tick(event)
-    if walk then
-        if player then
-            if path then
-                local curr_pos = player.character.position
+    for pid, walk in pairs(storage.pid_to_walk) do
+        local player = game.players[storage.pid_to_player_index[pid]]
+        local path = storage.pid_to_path[pid]
+        local path_index = storage.pid_to_path_index[pid]
+        local path_len = storage.pid_to_path_len[pid]
 
-                if distance(curr_pos, path[path_index].position) < distance_margin then
-                    path_index = path_index + 1
-                end
+        if walk then
+            if player then
+                if path then
+                    local curr_pos = player.character.position
 
-                if path_index > path_len then
-                    walk = false
-                    player.character.walking_state = { walking = false, direction = defines.direction.north }
-                    -- print("walk = false at distance " .. distance(curr_pos, path[path_len].position))
-                else
-                    local dir = get_direction(curr_pos, path[path_index].position)
-                    if dir then
-                        player.character.walking_state = { walking = true, direction = dir }
+                    if distance(curr_pos, path[path_index].position) < distance_margin then
+                        path_index = path_index + 1
+                        storage.pid_to_path_index[pid] = path_index
+                    end
+
+                    if path_index > path_len then
+                        player.character.walking_state = { walking = false, direction = defines.direction.north }
+                        remove_from_storage(pid)
+                        -- print("walk = false at distance " .. distance(curr_pos, path[path_len].position))
+                    else
+                        local dir = get_direction(curr_pos, path[path_index].position)
+                        if dir then
+                            player.character.walking_state = { walking = true, direction = dir }
+                        end
                     end
                 end
             end
