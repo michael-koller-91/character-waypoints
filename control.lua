@@ -186,6 +186,11 @@ local function on_lua_shortcut(event)
                 walking = false,
                 direction = defines.direction.north
             }
+            player.set_shortcut_toggled("character-waypoints-shortcut", false) -- untoggle shortcut
+            player.create_local_flying_text({
+                text = { "character-waypoints-stop" },
+                create_at_cursor = true
+            })
         end
 
         if storage.clicked_first_time then
