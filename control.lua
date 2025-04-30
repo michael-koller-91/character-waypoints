@@ -179,6 +179,19 @@ local function on_lua_shortcut(event)
         end
         local pid = storage.player_to_pid[event.player_index]
 
+        if storage.clicked_first_time then
+            storage.clicked_first_time = false
+            player.print({ "character-waypoints-hint" })
+        else
+            if not player.is_shortcut_toggled("character-waypoints-shortcut") then
+                player.create_local_flying_text({
+                    text = { "character-waypoints-instructions" },
+                    create_at_cursor = true,
+                    time_to_live = 160
+                })
+            end
+        end
+
         if pid then
             remove_from_storage(pid)
 
@@ -190,17 +203,6 @@ local function on_lua_shortcut(event)
             player.create_local_flying_text({
                 text = { "character-waypoints-stop" },
                 create_at_cursor = true
-            })
-        end
-
-        if storage.clicked_first_time then
-            storage.clicked_first_time = false
-            player.print({ "character-waypoints-hint" })
-        else
-            player.create_local_flying_text({
-                text = { "character-waypoints-instructions" },
-                create_at_cursor = true,
-                time_to_live = 160
             })
         end
     end
