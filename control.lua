@@ -1,5 +1,6 @@
 local distance_margin = 0.5
 local storage = {
+    clicked_first_time = true,
     pid = {},
     pid_to_goal = {},
     pid_to_path = {},
@@ -95,12 +96,8 @@ local function player_waypoints_hotkey(event)
             walking = false,
             direction = defines.direction.north
         }
-        player.create_local_flying_text({
-            text = { "character-waypoints-stop" },
-            position = player.character.position,
-            time_to_live = 80
-        })
-    else -- request a path for the player
+        player.set_shortcut_toggled("character-waypoints-shortcut", false) -- untoggle shortcut
+    else                                                                   -- request a path for the player
         local goal = event.cursor_position
 
         -- print_gps(player, player.character.position)
@@ -157,8 +154,10 @@ local function on_script_path_request_finished(event)
                 storage.pid_to_path_index[event.id] = 2
                 storage.pid_to_path_len[event.id] = path_len
                 storage.pid_to_walk[event.id] = true
+
+                player.set_shortcut_toggled("character-waypoints-shortcut", true) -- toggle shortcut
             end
-        else -- failed to find a path
+        else                                                                      -- failed to find a path
             if player then
                 player.create_local_flying_text({
                     text = { "character-waypoints-path-request-failed" },
@@ -175,6 +174,9 @@ end
 local function on_lua_shortcut(event)
     if event.prototype_name == "character-waypoints-shortcut" then
         local player = game.players[event.player_index]
+        if not player then
+            return
+        end
         local pid = storage.player_to_pid[event.player_index]
 
         if pid then
@@ -186,11 +188,16 @@ local function on_lua_shortcut(event)
             }
         end
 
-        player.create_local_flying_text({
-            text = { "character-waypoints-instructions" },
-            create_at_cursor = true,
-            time_to_live = 160
-        })
+        if storage.clicked_first_time then
+            storage.clicked_first_time = false
+            player.print({ "character-waypoints-hint" })
+        else
+            player.create_local_flying_text({
+                text = { "character-waypoints-instructions" },
+                create_at_cursor = true,
+                time_to_live = 160
+            })
+        end
     end
 end
 
@@ -214,7 +221,7 @@ local function on_tick(event)
                     if path_index > path_len then
                         player.character.walking_state = { walking = false, direction = defines.direction.north }
                         remove_from_storage(pid)
-                        -- print("walk = false at distance " .. distance(curr_pos, path[path_len].position))
+                        player.set_shortcut_toggled("character-waypoints-shortcut", false) -- untoggle shortcut
                     else
                         local dir = get_direction(curr_pos, path[path_index].position)
                         if dir then
