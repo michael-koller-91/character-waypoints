@@ -1,3 +1,8 @@
+# v0.1.1
+* When the shortcut is clicked for the first time, instructions are printed to the chat.
+* The shortcut is (un)toggled while the character is (not) walking.
+* There is no longer a flying text when the shortcut key is used to stop walking.
+
 # v0.1.0
 * The mod is multiplayer ready.
 * The message for a failed path request is now a localized name as well.
