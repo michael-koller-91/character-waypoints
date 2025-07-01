@@ -16,4 +16,5 @@
 * is it interesting to save the path so that walking continues when a game is loaded?
 * play sound when path request fails?
 * clean up storage: are all the variables necessary?
-* add more `if not return` checks
+* test on space platform
+* test in god mode
