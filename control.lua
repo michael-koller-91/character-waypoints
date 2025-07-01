@@ -1,6 +1,6 @@
 local distance_margin = 0.5
 local storage = {
-    clicked_first_time = true,
+    clicked_first_time = false,
     pid = {},
     pid_to_goal = {},
     pid_to_path = {},
@@ -179,8 +179,8 @@ local function on_lua_shortcut(event)
         end
         local pid = storage.player_to_pid[event.player_index]
 
-        if storage.clicked_first_time then
-            storage.clicked_first_time = false
+        if not storage.clicked_first_time then
+            storage.clicked_first_time = true
             player.print({ "character-waypoints-hint" })
         else
             if not player.is_shortcut_toggled("character-waypoints-shortcut") then
