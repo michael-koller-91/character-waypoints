@@ -89,6 +89,13 @@ local function player_waypoints_hotkey(event)
     local pid = storage.player_to_pid[event.player_index]
     local player = game.players[event.player_index]
 
+    if not player then
+        return
+    end
+    if not player.character then
+        return
+    end
+
     if pid then -- the player recently requested a path and is currently walking
         remove_from_storage(pid)
 
@@ -99,6 +106,10 @@ local function player_waypoints_hotkey(event)
         player.set_shortcut_toggled("character-waypoints-shortcut", false) -- untoggle shortcut
     else                                                                   -- request a path for the player
         local goal = event.cursor_position
+
+        if not player.surface then
+            return
+        end
 
         -- print_gps(player, player.character.position)
         -- print_gps(player, goal)
@@ -124,6 +135,10 @@ local function on_script_path_request_finished(event)
     if storage.pid[event.id] then
         local player = game.players[storage.pid_to_player_index[event.id]]
 
+        if not player then
+            return
+        end
+
         if event.path then
             local path = event.path
             local path_len = #path
@@ -131,6 +146,10 @@ local function on_script_path_request_finished(event)
             if path_len > 1 then -- otherwise there is no reason to walk
                 -- draw the path
                 if player then
+                    if not player.surface then
+                        return
+                    end
+
                     for i, p in ipairs(path) do
                         if i == path_len then
                             break
@@ -195,6 +214,10 @@ local function on_lua_shortcut(event)
         if pid then
             remove_from_storage(pid)
 
+            if not player.character then
+                return
+            end
+
             player.character.walking_state = {
                 walking = false,
                 direction = defines.direction.north
@@ -218,6 +241,10 @@ local function on_tick(event)
         if walk then
             if player then
                 if path then
+                    if not player.character then
+                        return
+                    end
+
                     local curr_pos = player.character.position
 
                     if distance(curr_pos, path[path_index].position) < distance_margin then
