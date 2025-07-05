@@ -1,0 +1,50 @@
+name: Character Waypoints
+run-name: Character Waypoints
+on: [push]
+jobs:
+  Players-Waypoints:
+    runs-on: ubuntu-latest
+    permissions: write-all
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v4
+
+      - name: Extract mod version from info.json
+        # if: github.ref_type == 'tag'
+        id: get_mod_version
+        run: |
+          MOD_VERSION=$(jq -r ".version" info.json)
+          echo "MOD_VERSION = ${MOD_VERSION}"
+          echo "mod_version=${MOD_VERSION}" >> $GITHUB_OUTPUT
+
+      - name: Create release
+        if: github.ref_type == 'tag'
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          draft: false
+          prerelease: false
+          release_name: character-waypoints-${{ github.ref }}
+          tag_name: ${{ github.ref }}
+          body_path: CHANGELOG.md
+
+      - name: Create mod .zip folder
+        if: github.ref_type == 'tag'
+        run: |
+          mkdir ./character-waypoints_${{ steps.get_mod_version.outputs.mod_version }}
+          cp -r {graphics/,locale/,*.lua,info.json} ./character-waypoints_${{ steps.get_mod_version.outputs.mod_version }}/
+          zip -r ./character-waypoints_${{ steps.get_mod_version.outputs.mod_version }}.zip ./character-waypoints_${{ steps.get_mod_version.outputs.mod_version }}/
+          ls .
+
+      - name: Add mod .zip folder to release
+        if: github.ref_type == 'tag'
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./character-waypoints_${{ steps.get_mod_version.outputs.mod_version }}.zip
+          asset_name: character-waypoints_${{ steps.get_mod_version.outputs.mod_version }}.zip
+          asset_content_type: application/gzip
