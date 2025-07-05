@@ -1,3 +1,9 @@
+# v0.1.2
+* Add a mod description.
+* Bugfix: Clicking the shortcut while walking now untoggles the shortcut.
+* Bugfix: Clicking the shortcut while walking now only shows one flying text.
+* Bugfix: The mod longer crashes the game when the mod key is used without a character (e.g., in god mode).
+
 # v0.1.1
 * When the shortcut is clicked for the first time, instructions are printed to the chat.
 * The shortcut is (un)toggled while the character is (not) walking.
