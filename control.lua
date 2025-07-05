@@ -183,6 +183,7 @@ local function on_script_path_request_finished(event)
                     create_at_cursor = true,
                     time_to_live = 80
                 })
+                player.play_sound({ path = "utility/cannot_build" })
 
                 remove_from_storage(event.id)
             end
