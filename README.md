@@ -1,8 +1,6 @@
 # issue TODOs
 
 * there are some super small gaps where the player can walk through but not when it walks automatically
-* if the character is very fast (e.g., mech armor with a lot of legendary legs), the `distance_margin` is too small and the mod bugs out
-  * the margin should probably be based on the character's speed
 
 # potential TODOs
 

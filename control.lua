@@ -1,4 +1,4 @@
-local distance_margin = 0.5
+local distance_margin = 0.5 -- a good enough initial value
 local storage = {
     clicked_first_time = false,
     pid = {},
@@ -247,6 +247,11 @@ local function on_tick(event)
                     end
 
                     local curr_pos = player.character.position
+
+                    distance_margin = 4 * player.character_running_speed
+                    if distance_margin <= 0 then
+                        return
+                    end
 
                     if distance(curr_pos, path[path_index].position) < distance_margin then
                         path_index = path_index + 1
