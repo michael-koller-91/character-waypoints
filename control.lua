@@ -107,10 +107,7 @@ local function player_waypoints_hotkey(event)
     local pid = storage.player_to_pid[event.player_index]
     local player = game.players[event.player_index]
 
-    if not player then
-        return
-    end
-    if not player.character then
+    if not player or not player.character then
         return
     end
 
@@ -128,7 +125,7 @@ local function player_waypoints_hotkey(event)
         goal.x = round(goal.x * 2) / 2
         goal.y = round(goal.y * 2) / 2
 
-        if not player.surface then
+        if not player.surface or not player.character.prototype or not player.character.position or not player.force then
             return
         end
 
@@ -179,30 +176,27 @@ local function on_script_path_request_finished(event)
             end
             local path_len = #path
 
-            if path_len > 1 then -- otherwise there is no reason to walk
-                -- draw the path
-                if player then
-                    if not player.surface then
-                        return
+            if path_len > 1 then -- draw the path
+                if not player.surface then
+                    return
+                end
+
+                for i, p in ipairs(path) do
+                    if i == path_len then
+                        break
                     end
 
-                    for i, p in ipairs(path) do
-                        if i == path_len then
-                            break
-                        end
-
-                        rendering.draw_line {
-                            color = { r = 1.0, g = 0.2627, b = 0.0, a = 0.5 },
-                            width = 5,
-                            from = p.position,
-                            to = path[i + 1].position,
-                            target = storage.pid_to_goal[event.id],
-                            surface = player.surface,
-                            time_to_live = 60,
-                            players = { LuaPlayer = player },
-                            draw_on_ground = true
-                        }
-                    end
+                    rendering.draw_line {
+                        color = { r = 1.0, g = 0.2627, b = 0.0, a = 0.5 },
+                        width = 5,
+                        from = p.position,
+                        to = path[i + 1].position,
+                        target = storage.pid_to_goal[event.id],
+                        surface = player.surface,
+                        time_to_live = 60,
+                        players = { LuaPlayer = player },
+                        draw_on_ground = true
+                    }
                 end
 
                 storage.pid_to_path[event.id] = path
@@ -213,16 +207,14 @@ local function on_script_path_request_finished(event)
                 player.set_shortcut_toggled("character-waypoints-shortcut", true) -- toggle shortcut
             end
         else                                                                      -- failed to find a path
-            if player then
-                player.create_local_flying_text({
-                    text = { "character-waypoints-path-request-failed" },
-                    create_at_cursor = true,
-                    time_to_live = 80
-                })
-                player.play_sound({ path = "utility/cannot_build" })
+            player.create_local_flying_text({
+                text = { "character-waypoints-path-request-failed" },
+                create_at_cursor = true,
+                time_to_live = 80
+            })
+            player.play_sound({ path = "utility/cannot_build" })
 
-                remove_from_storage(event.id)
-            end
+            remove_from_storage(event.id)
         end
     end
 end
@@ -275,48 +267,45 @@ local function on_tick(event)
         local path_index = storage.pid_to_path_index[pid]
         local path_len = storage.pid_to_path_len[pid]
 
-        if walk then
-            if player then
-                if path then
-                    if not player.character then
-                        return
-                    end
+        if not walk or not path or not player or not player.character then
+            return
+        end
 
-                    local curr_pos = player.character.position
+        local curr_pos = player.character.position
+        if not curr_pos then
+            return
+        end
 
-                    distance_margin = 4 * player.character.character_running_speed
-                    if distance_margin <= 0 then
-                        return
-                    end
+        distance_margin = 3 * player.character.character_running_speed
+        if not distance_margin or distance_margin <= 0 then
+            return
+        end
 
-                    if distance(curr_pos, path[path_index].position) < distance_margin then
-                        path_index = path_index + 1
-                        storage.pid_to_path_index[pid] = path_index
-                    end
+        if distance(curr_pos, path[path_index].position) < distance_margin then
+            path_index = path_index + 1
+            storage.pid_to_path_index[pid] = path_index
+        end
 
-                    if storage.could_fly_when_path_request_finished[pid] and not armor_provides_flight(player) then
-                        -- if while auto-walking the ability to fly was lost, stop walking
+        if storage.could_fly_when_path_request_finished[pid] and not armor_provides_flight(player) then
+            -- if while auto-walking the ability to fly was lost, stop walking
 
-                        player.character.walking_state = { walking = false, direction = defines.direction.north }
-                        remove_from_storage(pid)
-                        player.set_shortcut_toggled("character-waypoints-shortcut", false) -- untoggle shortcut
-                        player.create_local_flying_text({
-                            text = { "character-waypoints-path-request-failed" },
-                            create_at_cursor = true,
-                            time_to_live = 80
-                        })
-                    else
-                        if path_index > path_len then
-                            player.character.walking_state = { walking = false, direction = defines.direction.north }
-                            remove_from_storage(pid)
-                            player.set_shortcut_toggled("character-waypoints-shortcut", false) -- untoggle shortcut
-                        else
-                            local dir = get_direction(curr_pos, path[path_index].position)
-                            if dir then
-                                player.character.walking_state = { walking = true, direction = dir }
-                            end
-                        end
-                    end
+            player.character.walking_state = { walking = false, direction = defines.direction.north }
+            remove_from_storage(pid)
+            player.set_shortcut_toggled("character-waypoints-shortcut", false) -- untoggle shortcut
+            player.create_local_flying_text({
+                text = { "character-waypoints-path-request-failed" },
+                create_at_cursor = true,
+                time_to_live = 80
+            })
+        else
+            if path_index > path_len then
+                player.character.walking_state = { walking = false, direction = defines.direction.north }
+                remove_from_storage(pid)
+                player.set_shortcut_toggled("character-waypoints-shortcut", false) -- untoggle shortcut
+            else
+                local dir = get_direction(curr_pos, path[path_index].position)
+                if dir then
+                    player.character.walking_state = { walking = true, direction = dir }
                 end
             end
         end
