@@ -9,6 +9,7 @@ local storage = {
     pid_to_player_index = {},
     pid_to_walk = {},
     player_to_pid = {},
+    could_fly_when_path_request_finished = {}
 }
 
 local function remove_from_storage(pid)
@@ -22,6 +23,23 @@ local function remove_from_storage(pid)
         storage.pid_to_player_index[pid] = nil
         storage.pid_to_walk[pid] = nil
         storage.player_to_pid[player_index] = nil
+        storage.could_fly_when_path_request_finished[pid] = nil
+    end
+end
+
+local function armor_provides_flight(player)
+    if not player or not player.character then
+        return false
+    end
+    local inventory = player.character.get_inventory(defines.inventory.character_armor)
+    if not inventory then
+        return false
+    end
+    local armor = inventory[1]
+    if armor and armor.valid_for_read and armor.prototype then
+        return armor.prototype.provides_flight
+    else
+        return false
     end
 end
 
@@ -106,6 +124,9 @@ local function player_waypoints_hotkey(event)
         player.set_shortcut_toggled("character-waypoints-shortcut", false) -- untoggle shortcut
     else                                                                   -- request a path for the player
         local goal = event.cursor_position
+        -- round to nearest .5
+        goal.x = round(goal.x * 2) / 2
+        goal.y = round(goal.y * 2) / 2
 
         if not player.surface then
             return
@@ -139,8 +160,23 @@ local function on_script_path_request_finished(event)
             return
         end
 
-        if event.path then
+        local flight_path = {}
+        if armor_provides_flight(player) then
+            storage.could_fly_when_path_request_finished[event.id] = true
+            -- straight path from start to goal
+            flight_path = {
+                { needs_destroy_to_reach = false, position = player.character.position },
+                { needs_destroy_to_reach = false, position = storage.pid_to_goal[event.id] }
+            }
+        else
+            storage.could_fly_when_path_request_finished[event.id] = false
+        end
+
+        if event.path or storage.could_fly_when_path_request_finished[event.id] then
             local path = event.path
+            if storage.could_fly_when_path_request_finished[event.id] then
+                path = flight_path
+            end
             local path_len = #path
 
             if path_len > 1 then -- otherwise there is no reason to walk
@@ -248,7 +284,7 @@ local function on_tick(event)
 
                     local curr_pos = player.character.position
 
-                    distance_margin = 4 * player.character_running_speed
+                    distance_margin = 4 * player.character.character_running_speed
                     if distance_margin <= 0 then
                         return
                     end
@@ -258,14 +294,27 @@ local function on_tick(event)
                         storage.pid_to_path_index[pid] = path_index
                     end
 
-                    if path_index > path_len then
+                    if storage.could_fly_when_path_request_finished[pid] and not armor_provides_flight(player) then
+                        -- if while auto-walking the ability to fly was lost, stop walking
+
                         player.character.walking_state = { walking = false, direction = defines.direction.north }
                         remove_from_storage(pid)
                         player.set_shortcut_toggled("character-waypoints-shortcut", false) -- untoggle shortcut
+                        player.create_local_flying_text({
+                            text = { "character-waypoints-path-request-failed" },
+                            create_at_cursor = true,
+                            time_to_live = 80
+                        })
                     else
-                        local dir = get_direction(curr_pos, path[path_index].position)
-                        if dir then
-                            player.character.walking_state = { walking = true, direction = dir }
+                        if path_index > path_len then
+                            player.character.walking_state = { walking = false, direction = defines.direction.north }
+                            remove_from_storage(pid)
+                            player.set_shortcut_toggled("character-waypoints-shortcut", false) -- untoggle shortcut
+                        else
+                            local dir = get_direction(curr_pos, path[path_index].position)
+                            if dir then
+                                player.character.walking_state = { walking = true, direction = dir }
+                            end
                         end
                     end
                 end
