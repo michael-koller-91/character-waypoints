@@ -34,7 +34,7 @@ jobs:
         if: github.ref_type == 'tag'
         run: |
           mkdir ./character-waypoints_${{ steps.get_mod_version.outputs.mod_version }}
-          cp -r {graphics/,locale/,*.lua,info.json} ./character-waypoints_${{ steps.get_mod_version.outputs.mod_version }}/
+          cp -r {graphics/,locale/,*.lua,info.json,thumbnail.png} ./character-waypoints_${{ steps.get_mod_version.outputs.mod_version }}/
           zip -r ./character-waypoints_${{ steps.get_mod_version.outputs.mod_version }}.zip ./character-waypoints_${{ steps.get_mod_version.outputs.mod_version }}/
           ls .
 
