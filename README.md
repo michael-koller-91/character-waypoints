@@ -3,10 +3,6 @@
 A mod for Factorio.
 Adds a shortcut that automatically walks the character to the current cursor position.
 
-## issue TODOs
-
-* there are some super small gaps where the player can walk through but not when it walks automatically
-
 ## potential TODOs
 
 * in data.lua, what is the shortcut order?
