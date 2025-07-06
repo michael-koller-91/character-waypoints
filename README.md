@@ -1,8 +1,13 @@
-# issue TODOs
+# Character Waypoints
+
+A mod for Factorio.
+Adds a shortcut that automatically walks the character to the current cursor position.
+
+## issue TODOs
 
 * there are some super small gaps where the player can walk through but not when it walks automatically
 
-# potential TODOs
+## potential TODOs
 
 * in data.lua, what is the shortcut order?
 * add a map tag for the goal? ("utility.shoot_cursor_red")
