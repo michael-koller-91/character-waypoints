@@ -1,3 +1,8 @@
+# v0.1.3
+* Play a sound when the waypoint request fails.
+* If the character is able to fly, a straight path is calculated.
+* Bugfix: The mod no longer bugs out when the character running speed is very high (e.g., mech armor with many legendary legs) and the goal is close.
+
 # v0.1.2
 * Add a mod description.
 * Bugfix: Clicking the shortcut while walking now untoggles the shortcut.
