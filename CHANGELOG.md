@@ -1,3 +1,8 @@
+# v0.1.4
+* Add a mod thumbnail.
+* Add German locale text.
+* Bugfix: On rare occasions, if the character walked through a very small gap, the mod bugged out. This should be fixed now.
+
 # v0.1.3
 * Play a sound when the waypoint request fails.
 * If the character is able to fly, a straight path is calculated.
@@ -7,7 +12,7 @@
 * Add a mod description.
 * Bugfix: Clicking the shortcut while walking now untoggles the shortcut.
 * Bugfix: Clicking the shortcut while walking now only shows one flying text.
-* Bugfix: The mod longer crashes the game when the mod key is used without a character (e.g., in god mode).
+* Bugfix: The mod no longer crashes the game when the mod key is used without a character (e.g., in god mode).
 
 # v0.1.1
 * When the shortcut is clicked for the first time, instructions are printed to the chat.
